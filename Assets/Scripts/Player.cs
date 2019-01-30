@@ -4,17 +4,20 @@ public class Player : MonoBehaviour
 {
     [SerializeField] float runSpeed = 5f;
     [SerializeField] float jumpSpeed = 5f;
+    [SerializeField] float climbSpeed = 10f;
 
     bool isAlive = true;
 
     //Cached component references
     Rigidbody2D playerRigidBody2d;
     Animator playerAnimator;
+    Collider2D playerCollider2d;
 
     void Start()
     {
         playerRigidBody2d = GetComponent<Rigidbody2D>();
         playerAnimator = GetComponent<Animator>();
+        playerCollider2d = GetComponent<Collider2D>();
     }
 
     void Update()
@@ -22,6 +25,7 @@ public class Player : MonoBehaviour
         Run();
         FlipSprite();
         Jump();
+        Climb();
     }
 
     private void Run()
@@ -36,10 +40,26 @@ public class Player : MonoBehaviour
 
     private void Jump()
     {
-        if (Input.GetButtonDown("Jump"))
+        if (playerCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
         {
-            Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
-            playerRigidBody2d.velocity += jumpVelocityToAdd;
+            if (Input.GetButtonDown("Jump"))
+            {
+                Vector2 jumpVelocityToAdd = new Vector2(0f, jumpSpeed);
+                playerRigidBody2d.velocity += jumpVelocityToAdd;
+            }
+        }
+    }
+
+    private void Climb()
+    {
+        if (playerCollider2d.IsTouchingLayers(LayerMask.GetMask("Climbing")))
+        {
+            float controlThrow = Input.GetAxis("Vertical");
+            Vector2 climbVelocity = new Vector2(playerRigidBody2d.velocity.x, controlThrow * climbSpeed);
+            playerRigidBody2d.velocity = climbVelocity;
+
+            bool playerHasVerticalSpeed = Mathf.Abs(playerRigidBody2d.velocity.y) > Mathf.Epsilon;
+            playerAnimator.SetBool("Climbing", playerHasVerticalSpeed);
         }
     }
 
